@@ -7,8 +7,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from '~/components/
 import { Input } from '~/components/ui/input'
 import { Button } from '~/components/ui/button'
 import { Link } from 'react-router'
+import { useSignUpMutation } from '~/hooks/use-auth'
+import { toast } from 'sonner'
 
-type SignUpFormData = z.infer<typeof signUpSchema>
+export type SignUpFormData = z.infer<typeof signUpSchema>
 const SignUp = () => {
   const form = useForm<z.infer<typeof signUpSchema>>({
     resolver: zodResolver(signUpSchema),
@@ -19,8 +21,22 @@ const SignUp = () => {
         confirmPassword: "",
     },
   })
+  
+  const {mutate, isPending} = useSignUpMutation(); 
+
   const handleOnSubmit = (values: SignUpFormData) => {
-    console.log(values)
+    mutate(values, {
+        onSuccess: () => {
+            toast.success("Email Verification Required",{
+                description: "Please check your email for verification link. If you don't see it, please check your span folder."
+            });
+        },
+        onError: (error: any) => {
+            const errorMessage = error.response?.data?.message || "An error occurred";
+            console.log(error);
+            toast.error(error.message);
+        }
+    })
   }
   return (
     <div className='min-h-screen flex flex-col items-center justify-center bg-muted/40 p-4'>
@@ -86,8 +102,8 @@ const SignUp = () => {
                                 </FormItem>
                             )}
                         />
-                        <Button type="submit" className='w-full mb-3'>
-                            Sign in
+                        <Button type="submit" className='w-full mb-3' disabled={isPending}>
+                            {isPending? "Signing up...":"Sign up"}
                         </Button>
                     </form>
                     <CardFooter>
